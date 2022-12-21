@@ -1,0 +1,80 @@
+The goal of this project is to visualize mutation data between a database that houses 
+cancer mutations and another which houses mutant variation within the "normal" population. 
+The "normal" population contains mutant information for healthy individuals, and excludes
+individuals with severe pediatric disorders. The number of individuals found to have a 
+certain mutation at a position along the protein sequence of a gene which changes which 
+amino acid is used by the gene is compared between the databases. Thus, this project can 
+begin to answer a couple of questions:
+
+1. What mutations are found in both populations?
+2. What is the role of the mutation in generating a cancer phenotype, if at all? 
+	For example, if the mutation is found in both populations, does this mutation directly
+	contribute to a cancer phenotype or is there an interaction with another biological 
+	agent (i.e.protein, substrate, lipid, etc) that is causing the cancer phenotype that is
+	absent or causes no change in the "normal" individuals?
+
+Additionally, the use of the notebook is more appropriate than
+another user interface primarily because this project is geared towards data scientists
+who ideally would like to manipulate the data. 
+
+To obtain mutation data, I queried two different web services cbioportal (cancer variants) 
+and ExAC (normal variants) that give access to their databases. I used the requests module 
+to extract the data from their respective REST APIs. 
+
+For cbioportal, it was necessary to first get all the cancer study data, since the data 
+is organized by cancer study in a list of multiple studies. From there, for each study, 
+the sub data sets that correspond to mutations rather than other types of variation, had 
+to be extracted.  Next, I kept all mutations that resulted in an amino acid change 
+(where genetic_alteration_type == 'MUTATION_EXTENDED'). Other mutations would be nice to 
+look at, but I wanted to restrict the dataframe to strictly these mutations because it is 
+easier to visualize changes and compare between the databases(i.e. each database contained 
+different types of mutations, insertions and deletions cannot be easily visualized). 
+This list of cancer studies and genetic profiles then allows the user to obtain all amino 
+acid variants for a particular gene of interest. 
+
+To access mutation information in cbioportal that I need for the visualization for a given 
+gene,  I had to extract the reference amino acid, the position of this amino acid in the 
+protein sequence, and the mutant amino acid from another column in the dataframe which had 
+concatenated this information in a single string. I did so using the 're' module, allowing 
+me to split the string  within the list of cancer studies and concatenate them to the 
+dataframe as their own respective pandas series (column). I then filtered this 
+once more to include only missense variants (those resulting in amino acid changes that 
+result in a different amino acid, instead of a stop codon (non-sense mutations are 
+included in the missense variants group in this dataset), by dropping all rows where the
+amino_acid_change column did not have a value. 
+
+The ExAC database was slightly easier to query for the information I needed. The JSON 
+data was downloaded and I also had to add columns to the dataframe corresponding to each
+reference amino acid, position, and mutant amino acid using a similar function as the 
+one I used for cbioportal, which also uses the re module, but the data was 
+recorded slightly differently (in a string with a "p." before the reference, position, and
+mutant). Once I converted the JSON text file to a pandas dataframe, I queried the dataframe
+for only missense variants, and because there are two columns that provided this information,
+but slightly differently, I had to check that the rows returned from the dataframe were only
+from mutations where both columns corresponded to missense variants. Since there were still
+non-sense variants in the dataframe after I had done this, I filtered with a third 
+condition, dropping any row in the HGVSp. column (i.e. HGVSp.Pro134Ala) that did not 
+contain any information after "p." corresponding to any letter, followed by any number, 
+followed by any letter. I achieved this through supplying split_mutation as a function to 
+apply to the dataframe column. Finally, I had a dataframe with only missense variants. 
+
+For the visualization aspect of this project, I had to aggregate the mutants in each 
+dataframe by their position column so I could generate a graph showing the position, and 
+how many times that position was altered in each population. For example, if there was a 
+position along the protein where Glycine (G) was converted to another amino acid 5 times, 
+then I want to show a value of 5 at that position to show that this position has been 
+mutated 5 different times (different as in for a different individual) in that population. 
+Since cbioportal does not already aggregate different mutations for the same position, 
+(i.e. G13K has one row for each different individual who has had that mutation), I was able
+to group the dataframe by position and count over each row to output the number of mutations
+at a given position. In ExAC, the mutants are already grouped by the kind of mutation (i.e.
+G13K has one row, and there is a value of allele_count of X, rather than X rows of G13K), 
+so instead of counting, I used the sum function. 
+
+To actually visualize the data in an interactive plot as I had originally intended, I used
+plotly after spending some time trying to figure out why Bokeh (another visualization 
+module) wouldn't work. The way that Bokeh handles data is such that it did not allow me to 
+actually order the position numerically, and if I were to use the function I had already 
+used to do so, the rest of the mutation information is lost once I group the mutant residue 
+information are different. 
+ 
