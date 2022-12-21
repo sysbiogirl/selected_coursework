@@ -1,0 +1,23 @@
+The 10 transcripts of the sand mouse Arc locus:
+Arc1        xxxxx  4  ABCD
+Arc2        xxxxx  2  BC
+Arc3        xxxxx  3  CDE
+Arc4        xxxxx  4  DEFG
+Arc5        xxxxx  4  EFGH
+Arc6        xxxxx  3  FGH
+Arc7        xxxxx  2  GH
+Arc8        xxxxx  2  HI
+Arc9        xxxxx  3  IJA
+Arc10       xxxxx  3  JAB
+
+The 1000000 read sequences:
+a    104299
+b    124988
+c    120019
+d    140129
+e     80599
+f    124526
+g    132530
+h    108319
+i     34583
+j     30008
